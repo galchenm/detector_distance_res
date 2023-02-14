@@ -52,25 +52,32 @@ def get_resolution(CORRECTLP):
             l = re.sub(r"\s+", "**", lines[i_start].strip('\n')).split('**')[1:]
             
             if len(l) == 9:
-                res1, I1 = float(l[0]), float(l[2])
-                p_res1, p_I1 = 0., 0.
+                res, I_over_sigma = float(l[0]), float(l[2])
+                prev_res, prev_I_over_sigma = 0., 0.
+                
+                if I_over_sigma < 1:
+                    return -6000
+                
+                while I_over_sigma >= 1. and i_start < index2:
+                    if I_over_sigma == 1.:
+                        return res
 
-                while I1 >= 1. and i_start < index2:
-                    if I1 == 1.:
-                        return res1
-
-                    p_res1, p_I1 = res1, I1
+                    prev_res, prev_I_over_sigma = res, I_over_sigma
                     i_start += 1
                     l = re.sub(r"\s+", "**", lines[i_start].strip('\n')).split('**')[1:]
                     try:
-                        res1, I1 = float(l[0]), float(l[2])
+                        res, I_over_sigma = float(l[0]), float(l[2])
                     except ValueError:
-                        return p_res1
+                        return prev_res
                 
-                k = round((I1 - p_I1)/(res1 - p_res1),3)
-                b = round((res1*p_I1-p_res1*I1)/(res1-p_res1),3)
+                
+                
+                k = round((I_over_sigma - prev_I_over_sigma)/(res - prev_res),3)
+                b = round((res*prev_I_over_sigma - prev_res*I_over_sigma)/(res-prev_res),3)
+                
                 try:
                     resolution = round((1-b)/k,3)
+                    
                 except ZeroDivisionError:
                     return -1000
             else:
